@@ -7,3 +7,4 @@ scikit-learn
 nltk
 torch
 transformers
+accelerate  # ✅ Required for model optimization
