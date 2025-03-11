@@ -18,8 +18,11 @@ os.makedirs(NLTK_PATH, exist_ok=True)
 os.environ["NLTK_DATA"] = NLTK_PATH
 nltk.data.path.append(NLTK_PATH)
 
-# Download required NLTK resource
-nltk.download('punkt', download_dir=NLTK_PATH)
+# ✅ Ensure 'punkt' is downloaded to avoid errors
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt', download_dir=NLTK_PATH)
 
 # ✅ Ensure financial data file exists
 file_path = "financial_data.json"
