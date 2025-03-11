@@ -1,6 +1,7 @@
+import os
+import subprocess
 import re
 import json
-import os
 import faiss
 import numpy as np
 import streamlit as st
@@ -12,14 +13,28 @@ from nltk.tokenize import word_tokenize
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 
+# ✅ Fix: Ensure setuptools and distutils are installed for Python 3.12 compatibility
+try:
+    import setuptools
+except ImportError:
+    subprocess.run(["pip", "install", "--upgrade", "setuptools"])
+
+try:
+    import distutils
+except ImportError:
+    subprocess.run(["pip", "install", "distutils"])
+
 # ✅ Fix: Ensure NLTK works correctly on Streamlit Cloud
 NLTK_PATH = os.path.expanduser("~/.nltk_data")
 os.makedirs(NLTK_PATH, exist_ok=True)
 os.environ["NLTK_DATA"] = NLTK_PATH
 nltk.data.path.append(NLTK_PATH)
 
-# Download required NLTK resource
-nltk.download('punkt', download_dir=NLTK_PATH)
+# ✅ Ensure 'punkt' is downloaded to avoid errors
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt', download_dir=NLTK_PATH)
 
 # ✅ Ensure financial data file exists
 file_path = "financial_data.json"
