@@ -7,6 +7,6 @@ scikit-learn
 nltk
 transformers
 accelerate  # ✅ Required for model optimization
-torch==2.0.1
+torch==2.2.0
 torchvision
 torchaudio
