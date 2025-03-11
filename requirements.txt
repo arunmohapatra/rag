@@ -5,6 +5,8 @@ sentence-transformers
 rank-bm25
 scikit-learn
 nltk
-torch
 transformers
 accelerate  # ✅ Required for model optimization
+torch==2.0.1
+torchvision
+torchaudio
