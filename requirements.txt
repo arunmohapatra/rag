@@ -8,9 +8,8 @@ faiss-cpu==1.7.4
 sentence-transformers==2.2.2
 rank-bm25==0.2.2
 nltk==3.8.1
-transformers==4.36.2
+transformers==4.35.2  # ✅ Use compatible version
 torch==2.1.2
 yfinance==0.2.31
 scikit-learn==1.3.2
-huggingface-hub==0.16.4 
-
+huggingface-hub==0.19.4  # ✅ Matches transformers 4.35.2
