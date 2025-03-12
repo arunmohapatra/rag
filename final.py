@@ -12,6 +12,12 @@ except ImportError:
     subprocess.check_call([sys.executable, "-m", "ensurepip", "--default-pip"])
     subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", "pip"])
 
+# Ensure setuptools is installed without distutils dependency
+try:
+    import setuptools
+except ImportError:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "setuptools==58.0.4"])
+
 import json
 import yfinance as yf
 import pandas as pd
