@@ -65,8 +65,9 @@ def fetch_financial_data(ticker):
             "cash_flow": cash_flow.to_dict()
         }
 
-        # ✅ Save JSON with valid formatting
-        with open("financial_data.json", "w") as f:
+        # ✅ Ensure JSON is saved in the working directory
+        json_file_path = os.path.join(os.getcwd(), "financial_data.json")
+        with open(json_file_path, "w") as f:
             json.dump(structured_data, f, indent=4, default=str)
 
         return structured_data
@@ -76,7 +77,8 @@ def fetch_financial_data(ticker):
         return None
 
 # ✅ Ensure financial data is available
-file_path = "financial_data.json"
+# file_path = "financial_data.json"
+file_path = os.path.join(os.getcwd(), "financial_data.json")
 
 # ✅ Auto-delete corrupted JSON & regenerate
 if os.path.exists(file_path):
