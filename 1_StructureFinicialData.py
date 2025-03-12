@@ -21,40 +21,40 @@ print("Income Statement:\n", income_stmt.head())
 print("\nBalance Sheet:\n", balance_sheet.head())
 print("\nCash Flow Statement:\n", cash_flow.head())
 
-# ===========================
+# ============================================
 # 🔹 Preprocessing for RAG Model
-# ===========================
+# ===========================================
 
-# ✅ Remove Null/NaN Values
+# Remove Null/NaN Values
 income_stmt.dropna(inplace=True)
 balance_sheet.dropna(inplace=True)
 cash_flow.dropna(inplace=True)
 
-# ✅ Convert Data Types (Ensure numerical values are floats)
+# Convert Data Types (Ensure numerical values are floats)
 income_stmt = income_stmt.apply(pd.to_numeric, errors="coerce")
 balance_sheet = balance_sheet.apply(pd.to_numeric, errors="coerce")
 cash_flow = cash_flow.apply(pd.to_numeric, errors="coerce")
 
-# ✅ Rename Columns for Clarity
+# Rename Columns for Clarity
 income_stmt.rename(columns={"totalRevenue": "Revenue", "netIncome": "Net Income"}, inplace=True)
 balance_sheet.rename(columns={"totalAssets": "Total Assets", "totalLiabilities": "Total Liabilities"}, inplace=True)
 cash_flow.rename(columns={"operatingCashflow": "Operating Cash Flow"}, inplace=True)
 
-# ✅ Standardize Date Format & Convert Index to String (Fix JSON Serialization Error)
+# Standardize Date Format & Convert Index to String (Fix JSON Serialization Error)
 income_stmt.index = income_stmt.index.astype(str)
 balance_sheet.index = balance_sheet.index.astype(str)
 cash_flow.index = cash_flow.index.astype(str)
 
-# ✅ Save Cleaned Data
+# Save Cleaned Data
 income_stmt.to_csv("cleaned_income_statement.csv")
 balance_sheet.to_csv("cleaned_balance_sheet.csv")
 cash_flow.to_csv("cleaned_cash_flow.csv")
 
-# ===========================
+# ==============================================
 # 🔹 Structure Data for Retrieval (RAG Model)
-# ===========================
+# ==============================================
 
-# ✅ Create structured JSON format
+# Create structured JSON format
 structured_data = {
     "ticker": ticker,
     "income_statement": income_stmt.to_dict(),
@@ -62,7 +62,7 @@ structured_data = {
     "cash_flow": cash_flow.to_dict()
 }
 
-# ✅ Save as JSON
+# Save as JSON
 with open("financial_data.json", "w") as f:
     json.dump(structured_data, f, indent=4)
 
