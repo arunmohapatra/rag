@@ -236,7 +236,7 @@ if st.button("Get Answer"):
             # ✅ Display Retrieved Financial Data
             st.subheader("📊 Retrieved Financial Data:")
             for i, (doc, score) in enumerate(retrieved_info, 1):
-                st.markdown(f"**{i}. {doc}**  \n*Confidence Score:* `{score:.2%}`")
+                st.markdown(f"**{i}. {doc}**  \n💡 *Confidence Score:* `{score:.2%}`")
 
             # ✅ Display AI Response
             st.subheader("🤖 AI-Generated Answer:")
