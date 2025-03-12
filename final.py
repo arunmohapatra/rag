@@ -201,17 +201,23 @@ def generate_response(query, retrieved_docs):
 # ===========================
 
 st.title("📊 Financial RAG Model - AI-Driven Insights")
-ticker = st.sidebar.text_input("📈 Enter Stock Ticker:", "AAPL")
-if st.sidebar.button("Fetch Data"):
-    data = fetch_financial_data(ticker)
-    if data:
-        st.session_state["financial_data"] = data
-        st.success(f"✅ Data fetched for {ticker}")
-    else:
-        st.error("⚠ Failed to fetch data. Try again.")
 
-data = st.session_state.get("financial_data", fetch_financial_data("AAPL"))
-query = st.text_input("🔍 Enter your financial query:")
+# ✅ User selects stock ticker
+ticker = st.sidebar.text_input("📈 Enter Stock Ticker (e.g., AAPL, TSLA, MSFT):", "AAPL")
+
+if st.sidebar.button("Fetch Data"):
+    st.session_state["financial_data"] = fetch_financial_data(ticker)
+    st.success(f"✅ Data fetched for {ticker}")
+
+# ✅ Ensure data is loaded
+if "financial_data" not in st.session_state:
+    st.session_state["financial_data"] = fetch_financial_data("AAPL")
+
+data = st.session_state["financial_data"]
+
+# ✅ User Query Input
+query = st.text_input("🔍 Enter your financial query:", "What was Apple's net income in 2023?")
+
 if st.button("Get Answer"):
     with st.spinner("Retrieving relevant financial information..."):
         is_valid, warning_message = is_valid_query(query)
@@ -220,14 +226,15 @@ if st.button("Get Answer"):
         else:
             retrieved_info = retrieve_financial_info(query)
             response = generate_response(query, retrieved_info)
-            
+
+            # ✅ Display Retrieved Financial Data
             st.subheader("📊 Retrieved Financial Data:")
             if not retrieved_info:
                 st.warning("⚠ No relevant financial data retrieved. Try a different query.")
             else:
                 for i, (doc, score) in enumerate(retrieved_info, 1):
-                    st.markdown(f"**{i}. {doc}**\n💡 *Confidence Score:* `{score:.2%}`")
-            
+                    st.markdown(f"**{i}. {doc}**  \n*Confidence Score:* `{score:.2%}`")
+
             # ✅ Display AI Response
             st.subheader("🤖 AI-Generated Answer:")
             st.markdown(f"> {response}")
