@@ -144,10 +144,20 @@ def retrieve_financial_info(query, top_k=2):
     faiss_results = [(text_chunks[idx], 1 - (dist / np.max(faiss_distances))) for idx, dist in zip(faiss_indices[0], faiss_distances[0])]
 
     # 🔹 BM25 search
+    # tokenized_query = word_tokenize(query.lower())
+    # bm25_scores = bm25.get_scores(tokenized_query)
+    # bm25_top_indices = np.argsort(bm25_scores)[::-1][:top_k]
+    # bm25_results = [(text_chunks[idx], bm25_scores[idx] / np.max(bm25_scores)) for idx in bm25_top_indices]
     tokenized_query = word_tokenize(query.lower())
     bm25_scores = bm25.get_scores(tokenized_query)
-    bm25_top_indices = np.argsort(bm25_scores)[::-1][:top_k]
-    bm25_results = [(text_chunks[idx], bm25_scores[idx] / np.max(bm25_scores)) for idx in bm25_top_indices]
+
+    # ✅ Avoid division by zero
+    bm25_max_score = np.max(bm25_scores)
+    if bm25_max_score == 0 or np.isnan(bm25_max_score):  
+        bm25_results = [(text_chunks[idx], 0) for idx in np.argsort(bm25_scores)[::-1][:top_k]]  # Assign zero confidence
+    else:
+        bm25_results = [(text_chunks[idx], bm25_scores[idx] / bm25_max_score) for idx in np.argsort(bm25_scores)[::-1][:top_k]]
+
 
     # 🔹 Memory-Augmented Retrieval
     memory_results = []
