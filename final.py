@@ -174,7 +174,7 @@ def retrieve_financial_info(query, top_k=2):
 
 @st.cache_resource
 def load_model():
-    lm_model_name = "mistralai/tiny-mistral-248M"
+    lm_model_name = "facebook/opt-350m"
     lm_tokenizer = AutoTokenizer.from_pretrained(lm_model_name)
     lm_model = AutoModelForCausalLM.from_pretrained(
         lm_model_name, torch_dtype=torch.float32
