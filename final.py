@@ -1,4 +1,17 @@
 import os
+import sys
+import subprocess
+# ✅ Ensure setuptools & pip are up to date
+try:
+    import setuptools
+except ImportError:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", "setuptools"])
+try:
+    import pip
+except ImportError:
+    subprocess.check_call([sys.executable, "-m", "ensurepip", "--default-pip"])
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", "pip"])
+
 import json
 import yfinance as yf
 import pandas as pd
