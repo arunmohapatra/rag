@@ -147,7 +147,13 @@ def retrieve_financial_info(query, top_k=2):
     tokenized_query = word_tokenize(query.lower())
     bm25_scores = bm25.get_scores(tokenized_query)
     bm25_top_indices = np.argsort(bm25_scores)[::-1][:top_k]
-    bm25_results = [(text_chunks[idx], bm25_scores[idx] / np.max(bm25_scores)) for idx in bm25_top_indices]
+    # bm25_results = [(text_chunks[idx], bm25_scores[idx] / np.max(bm25_scores)) for idx in bm25_top_indices]
+    # 🔹 Handle division by zero
+    bm25_max_score = np.max(bm25_scores)
+    if bm25_max_score == 0:
+        bm25_results = [(text_chunks[idx], 0) for idx in bm25_top_indices]  # Assign zero confidence if no match
+    else:
+        bm25_results = [(text_chunks[idx], bm25_scores[idx] / bm25_max_score) for idx in bm25_top_indices]
 
     # 🔹 Memory-Augmented Retrieval
     memory_results = []
