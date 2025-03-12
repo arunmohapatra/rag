@@ -229,7 +229,6 @@ if st.button("Get Answer"):
 
             # ✅ Display Retrieved Financial Data
             st.subheader("📊 Retrieved Financial Data:")
-            st.markdown(f"> {retrieved_info}")
             if not retrieved_info:
                 st.warning("⚠ No relevant financial data retrieved. Try a different query.")
             else:
