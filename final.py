@@ -110,21 +110,28 @@ memory_store = deque(maxlen=MEMORY_SIZE)
 # 🔹 Step 3: AI Response Generation
 # ===========================
 
-def retrieve_financial_info(query, top_k=2):
-    query_embedding = embedding_model.encode([query], convert_to_numpy=True)
-    query_embedding = normalize(query_embedding, axis=1, norm='l2')
-    faiss_distances, faiss_indices = index.search(query_embedding, top_k)
-    faiss_results = [(text_chunks[idx], 1 - (dist / np.max(faiss_distances))) for idx, dist in zip(faiss_indices[0], faiss_distances[0])]
+@st.cache_resource
+def load_model():
+    lm_model_name = "facebook/opt-350m"
+    lm_tokenizer = AutoTokenizer.from_pretrained(lm_model_name)
+    lm_model = AutoModelForCausalLM.from_pretrained(
+        lm_model_name, torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
+    )
+    return lm_model, lm_tokenizer
+
+lm_model, lm_tokenizer = load_model()
+
+def generate_response(query, retrieved_docs):
+    memory_context = "\n".join([doc[0] for _, docs in memory_store for doc in docs])
+    context = "\n".join([doc[0] for doc in retrieved_docs])
+
+    prompt = f"Previous relevant data:\n{memory_context}\n\nCurrent data:\n{context}\n\nQuery: {query}\nAnswer:"
+    inputs = lm_tokenizer(prompt, return_tensors="pt")
     
-    tokenized_query = word_tokenize(query.lower())
-    bm25_scores = bm25.get_scores(tokenized_query)
-    bm25_max_score = np.max(bm25_scores) if np.max(bm25_scores) > 0 else 1
-    bm25_results = [(text_chunks[idx], bm25_scores[idx] / bm25_max_score) for idx in np.argsort(bm25_scores)[::-1][:top_k]]
+    with torch.no_grad():
+        output = lm_model.generate(**inputs, max_new_tokens=50)
     
-    result_dict = {text: max(score, 0) for text, score in faiss_results + bm25_results}
-    final_results = sorted(result_dict.items(), key=lambda x: x[1], reverse=True)[:top_k]
-    memory_store.append((query, final_results))
-    return final_results
+    return lm_tokenizer.decode(output[0], skip_special_tokens=True)
 
 # ===========================
 # 🔹 Step 4: Streamlit UI
@@ -149,9 +156,15 @@ if st.button("Get Answer"):
             st.warning(warning_message)
         else:
             retrieved_info = retrieve_financial_info(query)
+            response = generate_response(query, retrieved_info)
+            
             st.subheader("📊 Retrieved Financial Data:")
             if not retrieved_info:
                 st.warning("⚠ No relevant financial data retrieved. Try a different query.")
             else:
                 for i, (doc, score) in enumerate(retrieved_info, 1):
                     st.markdown(f"**{i}. {doc}**\n💡 *Confidence Score:* `{score:.2%}`")
+            
+            # ✅ Display AI Response
+            st.subheader("🤖 AI-Generated Answer:")
+            st.markdown(f"> {response}")
