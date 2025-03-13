@@ -26,7 +26,7 @@ nltk.download('punkt')
 
 def is_valid_query(query):
     """Validate user query to prevent irrelevant or harmful inputs."""
-    finance_keywords = ["revenue", "profit", "net income", "expenses", "earnings", "stock", "market"]
+    finance_keywords = ["revenue", "profit", "net income", "expenses", "earnings", "stock", "market", "expense", "share"]
     blacklist = ["hack", "attack", "password", "bomb", "violence", "kill", "harm", "illegal"]
 
     query_lower = query.lower()
