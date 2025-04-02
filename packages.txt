@@ -127,3 +127,21 @@ if __name__ == "__main__":
         print("⚠️ Failed Pipelines List:")
         for failed_pipeline in failed_pipelines:
             print(f"   - {failed_pipeline}")
+
+
+
+{
+    "application": "my-app",
+    "name": "pipeline1",
+    "stages": [
+        {
+            "type": "wait",
+            "name": "Wait Stage 1",
+            "waitTime": 10
+        }
+    ],
+    "triggers": [],
+    "limitConcurrent": true,
+    "keepWaitingPipelines": false
+}
+Example 
