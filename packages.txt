@@ -1,1 +1,93 @@
-python3.10
+pip install requests
+
+
+import os
+import json
+import requests
+import time
+
+# Spinnaker API URL
+SPINNAKER_API = "http://spinnaker-gate:8084"
+
+# Folder containing pipeline JSON files
+PIPELINE_FOLDER = "pipelines"
+
+# Headers for API requests
+HEADERS = {"Content-Type": "application/json"}
+
+def get_pipeline_files():
+    """Retrieve all JSON pipeline files from the folder."""
+    return [f for f in os.listdir(PIPELINE_FOLDER) if f.endswith(".json")]
+
+def create_pipeline(pipeline_json):
+    """Create a pipeline in Spinnaker."""
+    url = f"{SPINNAKER_API}/pipelines"
+    response = requests.post(url, headers=HEADERS, json=pipeline_json)
+
+    if response.status_code == 200:
+        print(f"Pipeline '{pipeline_json['name']}' created successfully.")
+        return True
+    else:
+        print(f"Failed to create pipeline '{pipeline_json['name']}': {response.text}")
+        return False
+
+def execute_pipeline(app_name, pipeline_name):
+    """Trigger the execution of a pipeline."""
+    url = f"{SPINNAKER_API}/pipelines/{app_name}/{pipeline_name}/start"
+    response = requests.post(url, headers=HEADERS)
+
+    if response.status_code == 200:
+        execution_id = response.json()["id"]
+        print(f"Pipeline '{pipeline_name}' execution started with ID: {execution_id}")
+        return execution_id
+    else:
+        print(f"Failed to start pipeline '{pipeline_name}': {response.text}")
+        return None
+
+def monitor_pipeline(execution_id):
+    """Monitor the execution of a pipeline until it completes."""
+    url = f"{SPINNAKER_API}/executions/{execution_id}"
+
+    while True:
+        response = requests.get(url, headers=HEADERS)
+        if response.status_code == 200 and response.json():
+            status = response.json()[0]["status"]
+            print(f"Execution {execution_id} status: {status}")
+
+            if status in ["SUCCEEDED", "FAILED", "CANCELED"]:
+                print(f"Execution {execution_id} completed with status: {status}")
+                return status
+
+        else:
+            print(f"Error fetching status for execution {execution_id}: {response.text}")
+        
+        time.sleep(5)
+
+if __name__ == "__main__":
+    pipeline_files = get_pipeline_files()
+
+    if not pipeline_files:
+        print("No pipeline JSON files found in folder.")
+        exit(1)
+
+    execution_ids = {}
+
+    # Create and execute all pipelines
+    for pipeline_file in pipeline_files:
+        with open(os.path.join(PIPELINE_FOLDER, pipeline_file), "r") as f:
+            pipeline_json = json.load(f)
+
+        app_name = pipeline_json["application"]
+        pipeline_name = pipeline_json["name"]
+
+        if create_pipeline(pipeline_json):
+            time.sleep(5)  # Allow time for pipeline creation
+            execution_id = execute_pipeline(app_name, pipeline_name)
+            if execution_id:
+                execution_ids[pipeline_name] = execution_id
+
+    # Monitor all running pipelines
+    for pipeline_name, execution_id in execution_ids.items():
+        print(f"Monitoring execution for pipeline: {pipeline_name}")
+        monitor_pipeline(execution_id)
+
