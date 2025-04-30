@@ -1,1 +1,147 @@
-python3.10
+pip install requests
+✅ Creates multiple pipelines under a single application
+✅ Executes all pipelines
+✅ Monitors execution until completion
+✅ Deletes the pipeline if execution succeeds
+✅ Keeps the pipeline if execution fails
+✅ Reports total pipelines and failed pipelines
+
+import os
+import json
+import requests
+import time
+
+# Spinnaker API URL
+SPINNAKER_API = "http://spinnaker-gate:8084"
+
+# Single application name for all pipelines
+APPLICATION_NAME = "my-app"
+
+# Folder containing pipeline JSON files
+PIPELINE_FOLDER = "pipelines"
+
+# Headers for API requests
+HEADERS = {"Content-Type": "application/json"}
+
+def get_pipeline_files():
+    """Retrieve all JSON pipeline files from the folder."""
+    return [f for f in os.listdir(PIPELINE_FOLDER) if f.endswith(".json")]
+
+def create_pipeline(pipeline_json):
+    """Create a pipeline in Spinnaker."""
+    url = f"{SPINNAKER_API}/pipelines"
+    pipeline_json["application"] = APPLICATION_NAME  # Ensure all pipelines are under the same app
+    response = requests.post(url, headers=HEADERS, json=pipeline_json)
+
+    if response.status_code == 200:
+        print(f"✅ Pipeline '{pipeline_json['name']}' created successfully.")
+        return True
+    else:
+        print(f"❌ Failed to create pipeline '{pipeline_json['name']}': {response.text}")
+        return False
+
+def execute_pipeline(pipeline_name):
+    """Trigger the execution of a pipeline."""
+    url = f"{SPINNAKER_API}/pipelines/{APPLICATION_NAME}/{pipeline_name}/start"
+    response = requests.post(url, headers=HEADERS)
+
+    if response.status_code == 200:
+        execution_id = response.json()["id"]
+        print(f"🚀 Pipeline '{pipeline_name}' execution started with ID: {execution_id}")
+        return execution_id
+    else:
+        print(f"❌ Failed to start pipeline '{pipeline_name}': {response.text}")
+        return None
+
+def monitor_pipeline(pipeline_name, execution_id):
+    """Monitor the execution of a pipeline until it completes."""
+    url = f"{SPINNAKER_API}/executions/{execution_id}"
+
+    while True:
+        response = requests.get(url, headers=HEADERS)
+        if response.status_code == 200 and response.json():
+            status = response.json()[0]["status"]
+            print(f"🔄 Execution {execution_id} ({pipeline_name}) status: {status}")
+
+            if status in ["SUCCEEDED", "FAILED", "CANCELED"]:
+                print(f"✅ Execution {execution_id} for pipeline '{pipeline_name}' completed with status: {status}")
+                return status
+
+        else:
+            print(f"⚠️ Error fetching status for execution {execution_id}: {response.text}")
+        
+        time.sleep(5)
+
+def delete_pipeline(pipeline_name):
+    """Delete a pipeline in Spinnaker."""
+    url = f"{SPINNAKER_API}/applications/{APPLICATION_NAME}/pipelineConfigs/{pipeline_name}"
+    response = requests.delete(url, headers=HEADERS)
+
+    if response.status_code == 200:
+        print(f"🗑️ Pipeline '{pipeline_name}' deleted successfully.")
+    else:
+        print(f"⚠️ Failed to delete pipeline '{pipeline_name}': {response.text}")
+
+if __name__ == "__main__":
+    pipeline_files = get_pipeline_files()
+
+    if not pipeline_files:
+        print("❌ No pipeline JSON files found in folder.")
+        exit(1)
+
+    execution_ids = {}
+    failed_pipelines = []
+
+    # Create and execute all pipelines
+    for pipeline_file in pipeline_files:
+        with open(os.path.join(PIPELINE_FOLDER, pipeline_file), "r") as f:
+            pipeline_json = json.load(f)
+
+        pipeline_name = pipeline_json["name"]  # Read name from JSON
+
+        if create_pipeline(pipeline_json):
+            time.sleep(5)  # Allow time for pipeline creation
+            execution_id = execute_pipeline(pipeline_name)
+            if execution_id:
+                execution_ids[pipeline_name] = execution_id
+
+    # Monitor all running pipelines
+    for pipeline_name, execution_id in execution_ids.items():
+        print(f"🔍 Monitoring execution for pipeline: {pipeline_name}")
+        status = monitor_pipeline(pipeline_name, execution_id)
+
+        if status == "SUCCEEDED":
+            delete_pipeline(pipeline_name)
+        else:
+            failed_pipelines.append(pipeline_name)
+
+    # Final report
+    total_pipelines = len(pipeline_files)
+    failed_count = len(failed_pipelines)
+
+    print("\n📊 **Pipeline Execution Summary**")
+    print(f"🔹 Total Pipelines: {total_pipelines}")
+    print(f"🔴 Failed Pipelines: {failed_count}")
+
+    if failed_pipelines:
+        print("⚠️ Failed Pipelines List:")
+        for failed_pipeline in failed_pipelines:
+            print(f"   - {failed_pipeline}")
+
+
+
+{
+    "application": "my-app",
+    "name": "pipeline1",
+    "stages": [
+        {
+            "type": "wait",
+            "name": "Wait Stage 1",
+            "waitTime": 10
+        }
+    ],
+    "triggers": [],
+    "limitConcurrent": true,
+    "keepWaitingPipelines": false
+}
+Example 
